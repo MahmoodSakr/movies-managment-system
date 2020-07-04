@@ -1,0 +1,48 @@
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Images Info</title>
+    <style>
+        table,
+        th,
+        tr,
+        td {
+            border: 1px solid rgb(255, 0, 0);
+            font-size: large;
+        }
+    </style>
+</head>
+
+<body>
+    <% i=1 %>
+    <% if (imgPathArr.length>0) { %>
+    <h1><u> There are <%=imgPathArr.length %> uploaded images </u></h1>
+    <table style="width:auto">
+        <tr>
+            <th>Original image</th>
+            <th>500*500</th>
+            <th>250*250</th>
+            <th>Rotated by 90</th>
+        </tr>
+        <tr>
+            <% imgPathArr.forEach((imgPath) => { %>
+            <td>
+                <img src="/<%=imgPath %>" />
+            </td>
+            <% if (i==4) { %>
+        </tr>
+        <tr>
+            <% i=0 %>
+            <% } %>
+            <% i++ %>
+            <% }) %>
+    </table>
+    <% } else {%>
+    <h1>No images are uploaded yet</h1>
+    <h3> <a href="/uploadFile"> Click here to upload an image</a> </h3>
+    <% }%>
+</body>
+
+</html>

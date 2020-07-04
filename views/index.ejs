@@ -1,0 +1,51 @@
+<html>
+
+<head>
+    <title>File uploading</title>
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+    <script src="http://cdnjs.cloudflare.com/ajax/libs/jquery.form/3.51/jquery.form.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            var anotherClicked = false;
+            $('#file').on('click', () => {
+                anotherClicked = true;
+            })
+            // adjust the form submit button action to send a post route to the submit url 
+            $('#uploadForm').submit(function () {
+                if ($('#file').val() != "" && anotherClicked == true) {
+                    $("#status").empty().text("Image file is being uploading ...");
+                    $(this).ajaxSubmit({
+                        success: function (response) {
+                            $("#status").empty().text(response);
+                        },
+                        error: function (err) {
+                            $("#status").empty().text('Uploading Error : ' + err.status);
+                        },
+                    });
+                    anotherClicked = false;
+
+                } else if ($('#file').val() != "" && anotherClicked == false) {
+                    $("#status").empty();
+                    alert('This image file was already uploaded before !')
+                } else {
+                    $("#status").empty()
+                    alert('Firstly, please select any image file to be uploaded !')
+                }
+                return false;
+            });
+        });  
+    </script>
+</head>
+
+<body>
+    <h1 style="color: red;"> Click on upload to get an image </h1>
+    <br>
+    <form id="uploadForm" action="/uploadFile" method="post">
+        <input type="file" name="fileFormField" id="file" /><br /><br />
+        <input type="submit" value="Upload image" name="submit"><br /><br />
+        <span id="status"></span>
+    </form>
+    <h2> <a href="/uploadFile/info"> Click here to see all previous uploaded images</a> </h2>
+</body>
+
+</html>
