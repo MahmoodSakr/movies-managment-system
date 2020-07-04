@@ -1,47 +1,53 @@
 const express = require("express");
 const userModel = require("../models/user");
 const { check, validationResult } = require("express-validator");
-const router = express.Router();
 const jwt = require("jsonwebtoken");
-//------------Routes---------------
-// Add new user
+const router = express.Router();
+//-------------Routes---------------
+// Add new user from the sign up form post request
 router.post(
   "/signup",
   [
-    check("fname", "First name must no be empty or decimal")
+    check("fname", "User first name must not be empty or decimal")
       .not()
       .isEmpty()
       .not()
       .isDecimal(),
-    check("lname", "Last name must no be empty or decimal")
+    check("lname", "user last name must not be empty or decimal")
       .not()
       .isEmpty()
       .not()
       .isDecimal(),
-    check("email", "Email must be an email valid and not empty or decimal")
+    check(
+      "email",
+      "User email must be a valid format and not be empty or decimal"
+    )
       .not()
       .isEmpty()
       .isEmail()
       .not()
       .isDecimal(),
-    check("username", "Username must no be empty or decimal")
+    check("username", "Username must not be empty or decimal")
       .not()
       .isEmpty()
       .not()
       .isDecimal(),
-    check("password", "Enter a valid password (min 4: max 8) chars")
+    check(
+      "password",
+      "Password must not be empty and its length included from 4 up to 8 chars"
+    )
       .not()
       .isEmpty()
       .isLength({ min: 4, max: 8 }),
-    check("password2", "Passwords do not match").custom(
+    check("password2", "The two passwords are not matched").custom(
       (value, { req }) => value === req.body.password
     ),
   ],
   (req, res) => {
-    // Check validation errors
+    // User sign up form validation
     errors = validationResult(req);
     if (!errors.isEmpty()) {
-      console.log("Validation errors : ", errors.array());
+      console.log("Sign up request validation errors : ", errors.array());
       return res.status(400).json({ errorMessage: errors.array() });
     }
     // Create a new user
@@ -51,33 +57,37 @@ router.post(
     user.email = req.body.email;
     user.username = req.body.username;
     user.password = req.body.password;
+    // insert a new user in the db
     user.save((err, user) => {
+      // error
       if (err) {
         return res.status(500).json({ errorMessage: err.message });
       }
+      // if the user not be added
       if (user == null) {
         return res
           .status(500)
           .json({ message: "Cant add a new user to the db" });
       }
+      // user is added on the db
       console.log("New user has been added: ", user);
-      return res.status(201).json({ "User is added": user });
+      return res.status(201).json({ "New user has been added": user });
     });
   }
 );
 
-// user login
+// handle the user login post request from the sign-in form
 router.post(
   "/login",
   [
-    check("username", "User name must no be empty or decimal")
+    check("username", "User name must not be empty or decimal")
       .not()
       .isEmpty()
       .not()
       .isDecimal(),
     check(
       "password",
-      "Password must not be empty and contain from (min 4: max 8) chars"
+      "Password must not be empty and contain from 4 up to 8 chars"
     )
       .not()
       .isEmpty()
@@ -85,13 +95,14 @@ router.post(
   ],
   async (req, res) => {
     try {
-      // Form login validation
+      // User login form validation
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
-        console.log("Validation errors", errors.array());
+        console.log("Login request validation errors", errors.array());
         return res.status(400).json({ errorMessage: errors.array() });
       }
       // Search for user data
+      // if u need to use bcrypt to hash the password before the query filter, u have to do that here
       user = await userModel.findOne({
         username: req.body.username,
         password: req.body.password,
@@ -99,7 +110,7 @@ router.post(
       if (user == null) {
         // User not founded
         return res.status(404).json({
-          message: "User is not found, please sign up firstly",
+          message: "This user is not founded, please sign up firstly !",
         });
       } else {
         // User is existed
@@ -108,10 +119,10 @@ router.post(
         userObj._id = user._id;
         userObj.username = user.username;
         var token = await jwt.sign(userObj, "secretkey");
-        // Store this token in he browser
+        // for each logined use data, a jwt token is stored in the user/client  browser as a cookie
         res.cookie("token", token);
         return res.status(200).json({
-          message: "This user is founded and signed in",
+          message: "This user is logined successfully.",
           "User details": user,
         });
       }
@@ -130,9 +141,9 @@ router.get("/logout", async (req, res) => {
       .status(200)
       .json({ message: userObj.username + " has been signed out" });
   } else {
-    return res
-      .status(200)
-      .json({ message: "No user is signed in, please sign in firstly !" });
+    return res.status(200).json({
+      message: "No user is logined in before, please sign in !",
+    });
   }
 });
 
@@ -143,9 +154,9 @@ router.get("/", (req, res) => {
       return res.status(500).json({ errorMessage: err.message });
     }
     if (users.length == 0) {
-      return res.status(500).json({ message: "No users are existed" });
+      return res.status(500).json({ message: "No users are existed in Db" });
     }
-    return res.status(200).json({ "All Users": users });
+    return res.status(200).json({ "All existed users in db": users });
   });
 });
 
@@ -154,37 +165,72 @@ router.get("/:id", (req, res) => {
     if (err) {
       res.status(500).json({ errorMessage: err.message });
     } else if (user == null) {
-      res.status(200).json({ message: "User is not found" });
+      res.status(200).json({ message: "This user is not founded in db !" });
     } else {
-      res.status(200).json({ message: "User is already founded" });
+      res.status(200).json({
+        message: `This user is founded in db and its name is ${user.username}`,
+      });
     }
   });
 });
 
 // Delete user
-router.delete("/delete/:id", async (req, res) => {
+router.delete("/delete/:id", deleting_authorization, async (req, res) => {
   try {
+    // find him before deleting process
     user = await userModel.findById(req.params.id);
     if (user != null) {
-      userModel.deleteMany({ _id: req.params.id }, (err, deletedResult) => {
+      userModel.deleteOne({ _id: req.params.id }, (err, deletedResult) => {
         if (err) {
           return res.json({ errorMessage: err.message });
         }
         if (deletedResult.deletedCount == 0) {
-          return res.json({ message: "User deletion is not done" });
+          return res.json({ message: "User deleting operation is not done !" });
         }
         if (deletedResult.deletedCount > 0) {
-          res.clearCookie("username");
-          res.clearCookie("_id");
-          return res.json({ message: "user is deleted successfully" });
+          res.clearCookie("token");
+          return res.json({
+            message: `User ${user.username} has been deleted successfully.`,
+          });
         }
       });
     } else {
-      return res.json({ message: "User is not founded to be deleted" });
+      return res.json({
+        message: "This user is not founded in the db to be deleted",
+      });
     }
   } catch (error) {
-    res.status(500).json({ errorMessage: existed });
+    res.status(500).json({ errorMessage: error.message });
   }
 });
+async function deleting_authorization(req, res, next) {
+  try {
+    if (req.cookies.token) {
+      userObj = await jwt.verify(req.cookies.token, "secretkey");
+      if (userObj._id == req.params.id) {
+        console.log(
+          `The logined user ${userObj.username} is authorized to delete his data`
+        );
+        next();
+      } else {
+        console.log(
+          `The logined user ${userObj.username} is not authorized to delete other user data`
+        );
+        return res.status(403).json({
+          message: `This user ${userObj.username} is not authorized to delete other user data`,
+        });
+      }
+    } else {
+      return res.status(403).json({
+        message:
+          "No user is currently logined, so the deleting process is not authorized totally!",
+      });
+    }
+  } catch (error) {
+    return res.status(500).json({
+      errorMessage: error.message,
+    });
+  }
+}
 
 module.exports = router;

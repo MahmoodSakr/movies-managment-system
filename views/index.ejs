@@ -38,14 +38,15 @@
 </head>
 
 <body>
-    <h1 style="color: red;"> Click on upload to get an image </h1>
+    <h1 style="color: red;"> Click upload image to get one </h1>
     <br>
     <form id="uploadForm" action="/uploadFile" method="post">
         <input type="file" name="fileFormField" id="file" /><br /><br />
         <input type="submit" value="Upload image" name="submit"><br /><br />
         <span id="status"></span>
     </form>
-    <h2> <a href="/uploadFile/info"> Click here to see all previous uploaded images</a> </h2>
+    <h2> <a href="/uploadFile/images"> Click to see all previous uploaded images</a> </h2>
+    <h2> <a href="/uploadFile/info"> Click to see a brief on these images</a> </h2>
 </body>
 
 </html>
