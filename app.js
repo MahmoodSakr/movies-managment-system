@@ -15,11 +15,23 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, "uploads")));
 //---------------MongoDB Connection---------------
-const DbUrl = "mongodb://localhost:27017/movieDB";
-mongoose.connect(DbUrl, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-});
+function db_connection_from_localhost() {
+  const DbUrl = "mongodb://localhost:27017/movieDB";
+  mongoose.connect(DbUrl, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  });
+}
+function db_connection_from_heroku() {
+  // const DbUrl =
+  //   "mongodb+srv://sakr:root@firstcluster-n7gej.mongodb.net/test?retryWrites=true&w=majority";
+  mongoose.connect(process.env.DbUrl, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  });
+}
+db_connection_from_localhost();
+// db_connection_from_heroku();
 dbConnection = mongoose.connection;
 dbConnection.once("open", () => {
   console.log("Db is connected successfully");
