@@ -30,8 +30,8 @@ function db_connection_from_heroku() {
     useUnifiedTopology: true,
   });
 }
-db_connection_from_localhost();
-// db_connection_from_heroku();
+//db_connection_from_localhost();
+db_connection_from_heroku();
 dbConnection = mongoose.connection;
 dbConnection.once("open", () => {
   console.log("Db is connected successfully");
